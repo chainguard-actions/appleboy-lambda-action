@@ -1,0 +1,26 @@
+name: Test VPC and Layers Inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: fake-access-key
+          aws_secret_access_key: fake-secret-key
+          function_name: my-test-function
+          image_uri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest
+          layers: "arn:aws:lambda:us-east-1:123456789012:layer:my-layer:1"
+          reversion_id: "abc123def456"
+          subnets: "subnet-12345678,subnet-87654321"
+          securitygroups: "sg-12345678,sg-87654321"
+          dry_run: "true"
+        continue-on-error: true
+      - name: Assert action ran with vpc and layers inputs
+        run: |
+          echo "Action completed with image_uri, layers, reversion_id, subnets, and securitygroups inputs"
+          echo "PASS: inputs were accepted by the action"

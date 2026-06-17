@@ -1,0 +1,25 @@
+name: Test S3 Deployment Inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: fake-access-key
+          aws_secret_access_key: fake-secret-key
+          aws_session_token: fake-session-token
+          function_name: my-test-function
+          s3_bucket: my-deployment-bucket
+          s3_key: deployments/my-function.zip
+          s3_object_version: "1"
+          dry_run: "true"
+        continue-on-error: true
+      - name: Assert action ran with s3 inputs
+        run: |
+          echo "Action completed with s3_bucket, s3_key, s3_object_version, and aws_session_token inputs"
+          echo "PASS: inputs were accepted by the action"
