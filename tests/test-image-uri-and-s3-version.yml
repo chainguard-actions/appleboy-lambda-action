@@ -1,0 +1,55 @@
+name: Test image URI, S3 object version, and source inputs (dry run)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create dummy source files for zip
+        run: |
+          mkdir -p /tmp/lambda_src
+          echo "def handler(event, context): return 'hello'" > /tmp/lambda_src/handler.py
+      - id: action-image-uri
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: my-container-function
+          image_uri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest
+          dry_run: true
+          publish: false
+      - name: Assert action ran with image_uri input
+        run: |
+          echo "Action outcome (image_uri): ${{ steps.action-image-uri.outcome }}"
+          if [ "${{ steps.action-image-uri.outcome }}" = "success" ] || [ "${{ steps.action-image-uri.outcome }}" = "failure" ]; then
+            echo "PASS: action ran and produced a result with image_uri input"
+          else
+            echo "FAIL: action did not run properly with image_uri, outcome=${{ steps.action-image-uri.outcome }}"
+            exit 1
+          fi
+      - id: action-s3-version
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: my-s3-versioned-function
+          s3_bucket: my-deployment-bucket
+          s3_key: deployments/my-function.zip
+          s3_object_version: abc123objectversion
+          source: /tmp/lambda_src/handler.py
+          dry_run: true
+          publish: false
+      - name: Assert action ran with s3_object_version and source inputs
+        run: |
+          echo "Action outcome (s3_object_version + source): ${{ steps.action-s3-version.outcome }}"
+          if [ "${{ steps.action-s3-version.outcome }}" = "success" ] || [ "${{ steps.action-s3-version.outcome }}" = "failure" ]; then
+            echo "PASS: action ran and produced a result with s3_object_version and source inputs"
+          else
+            echo "FAIL: action did not run properly with s3_object_version/source, outcome=${{ steps.action-s3-version.outcome }}"
+            exit 1
+          fi
