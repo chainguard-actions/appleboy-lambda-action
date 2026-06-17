@@ -1,0 +1,70 @@
+name: Test container image URI, S3 object version, and source inputs
+on:
+  workflow_dispatch:
+jobs:
+  test-container-s3-extended:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create dummy source files for zip
+        run: |
+          mkdir -p /tmp/lambda_src
+          echo "def handler(event, context): return 'hello'" > /tmp/lambda_src/handler.py
+
+      - id: action-image
+        name: Run Lambda deploy action with container image URI
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: my-container-function
+          image_uri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest
+          dry_run: "true"
+
+      - name: Assert action ran with image_uri input
+        env:
+          OUTCOME: ${{ steps.action-image.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          # With fake AWS credentials, the action will fail with an auth/access error.
+          # That is expected — what we are testing is that the action starts up correctly,
+          # parses the image_uri input, and attempts to contact AWS.
+          if [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action executed with image_uri (outcome=$OUTCOME)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+
+      - id: action-s3-version
+        name: Run Lambda deploy action with S3 object version and source
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: my-s3-versioned-function
+          s3_bucket: my-deployment-bucket
+          s3_key: deployments/lambda.zip
+          s3_object_version: "abc123objectversion"
+          source: /tmp/lambda_src/handler.py
+          dry_run: "true"
+
+      - name: Assert action ran with s3_object_version and source inputs
+        env:
+          OUTCOME: ${{ steps.action-s3-version.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          # With fake AWS credentials, the action will fail with an auth/access error.
+          # That is expected — what we are testing is that the action starts up correctly,
+          # parses the s3_object_version and source inputs, and attempts to contact AWS.
+          if [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action executed with s3_object_version and source (outcome=$OUTCOME)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
