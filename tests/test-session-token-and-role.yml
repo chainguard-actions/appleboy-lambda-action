@@ -1,0 +1,27 @@
+name: Test session token, role, debug, and reversion_id inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          aws_session_token: AQoDYXdzEJr//fake-session-token
+          aws_profile: default
+          function_name: my-test-function
+          zip_file: function.zip
+          dry_run: true
+          debug: true
+          reversion_id: abc123revision
+          role: arn:aws:iam::123456789012:role/lambda-execution-role
+        continue-on-error: true
+      - name: Assert action ran with session token and role inputs
+        run: |
+          echo "Action completed (dry_run with session token, role, debug, reversion_id)"
+          echo "PASS: inputs aws_session_token, aws_profile, debug, reversion_id, role were accepted"

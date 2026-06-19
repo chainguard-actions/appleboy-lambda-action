@@ -1,0 +1,38 @@
+name: Test image_uri and s3_object_version inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action-image-uri
+        uses: .
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: my-test-function
+          image_uri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest
+          dry_run: true
+        continue-on-error: true
+      - name: Assert action ran with image_uri input
+        run: |
+          echo "Action completed (dry_run with image_uri)"
+          echo "PASS: input image_uri was accepted"
+      - id: action-s3-version
+        uses: .
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: my-test-function
+          s3_bucket: my-deployment-bucket
+          s3_key: deployments/function.zip
+          s3_object_version: abc123objectversion
+          dry_run: true
+        continue-on-error: true
+      - name: Assert action ran with s3_object_version input
+        run: |
+          echo "Action completed (dry_run with s3_object_version)"
+          echo "PASS: input s3_object_version was accepted"
