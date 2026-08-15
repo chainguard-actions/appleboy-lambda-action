@@ -8,27 +8,36 @@
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
-**Harden Agent Version:** `1`
+**Harden Agent Version:** `2`
 
-Action **appleboy--lambda-action/v0.1.9** was hardened automatically. 1 finding(s) were identified and resolved across 1 iteration(s).
+Action **appleboy--lambda-action/v0.1.9** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### unpinned-uses (severity: high)
 
-The Dockerfile used by this Docker action pulls a base image using a mutable tag rather than an immutable SHA digest. `FROM ghcr.io/appleboy/drone-lambda:1.3.6` uses the tag `1.3.6`, which can be silently replaced with different (potentially malicious) content at any time. It should be pinned to a full SHA256 digest, e.g. `FROM ghcr.io/appleboy/drone-lambda@sha256:<64-hex-char-digest> # 1.3.6`.
+The workflow file .github/workflows/ci.yml uses mutable tag-based refs instead of pinned 40-character SHA commit hashes. Specifically: `uses: actions/checkout@v3` and `uses: actions/setup-go@v4`. These tags can be moved to point to different (potentially malicious) commits without notice, creating a supply-chain risk.
 
 Locations:
 
-- `Dockerfile:1`
+- `.github/workflows/ci.yml:11`
+- `.github/workflows/ci.yml:13`
+
+### missing-permissions (severity: medium)
+
+The workflow file .github/workflows/ci.yml has no top-level `permissions:` key, and the only job (`deploy_zip`) also has no job-level `permissions:` key. Without explicit permissions, the workflow inherits the default repository permissions (which may include broad write access), violating the principle of least privilege.
+
+Locations:
+
+- `.github/workflows/ci.yml:1`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses
+**Fixes applied:** unpinned-uses, missing-permissions
 
 **Notes:**
 
-Pinned the Dockerfile base image from `ghcr.io/appleboy/drone-lambda:1.3.6` to `ghcr.io/appleboy/drone-lambda@sha256:5e5a2689782a3722fa0e0cdda6c0f532b64abe17c02d0b6e12197792687e3e48 # 1.3.6`. The mutable tag is now replaced with an immutable digest, preventing silent replacement of the image content.
+1. Pinned actions/checkout@v3 to SHA a37ce9120846195fa4ece8f58b268e6043cb2f26 and actions/setup-go@v4 to SHA 7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4, preserving the original tags as inline comments. 2. Added top-level `permissions: {}` to deny all permissions by default, and a job-level `permissions: { contents: read }` for the deploy_zip job (minimum required for checkout).
 

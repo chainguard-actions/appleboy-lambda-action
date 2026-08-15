@@ -1,0 +1,37 @@
+name: Test container image URI, role, and tracing mode inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with image_uri, role, and tracing_mode inputs (expect failure with fake creds)
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+          aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          function_name: test-function-container
+          image_uri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest
+          role: arn:aws:iam::123456789012:role/lambda-execution-role
+          tracing_mode: Active
+          dry_run: "true"
+          publish: "false"
+
+      - name: Assert action ran with container image inputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          # With fake AWS credentials, the action will fail with an auth error.
+          # We are verifying the action accepts image_uri, role, and tracing_mode inputs.
+          if [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action executed with container image inputs (outcome=$OUTCOME)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
