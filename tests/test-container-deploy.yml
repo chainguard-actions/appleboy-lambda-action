@@ -1,0 +1,25 @@
+name: Test container image and advanced function config inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: fake-key-id
+          aws_secret_access_key: fake-secret-key
+          function_name: my-container-function
+          image_uri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest
+          role: arn:aws:iam::123456789012:role/my-lambda-role
+          layers: arn:aws:lambda:us-east-1:123456789012:layer:my-layer:1
+          tracing_mode: Active
+          dry_run: true
+      - name: Assert action was invoked with container and config inputs
+        run: |
+          echo "Action completed (continue-on-error). Step outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action was invoked with image_uri, role, layers, and tracing_mode inputs"

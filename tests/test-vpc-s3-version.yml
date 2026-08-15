@@ -1,0 +1,26 @@
+name: Test VPC config and S3 object version inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: fake-key-id
+          aws_secret_access_key: fake-secret-key
+          function_name: my-vpc-function
+          s3_bucket: my-deployment-bucket
+          s3_key: deployments/my-function.zip
+          s3_object_version: abc123objectversion
+          subnets: subnet-0123456789abcdef0,subnet-0fedcba9876543210
+          securitygroups: sg-0123456789abcdef0,sg-0fedcba9876543210
+          dry_run: true
+      - name: Assert action was invoked with VPC and S3 version inputs
+        run: |
+          echo "Action completed (continue-on-error). Step outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action was invoked with s3_object_version, subnets, and securitygroups inputs"

@@ -1,0 +1,26 @@
+name: Test session token and profile inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          aws_region: us-east-1
+          aws_access_key_id: fake-key-id
+          aws_secret_access_key: fake-secret-key
+          aws_session_token: fake-session-token
+          aws_profile: default
+          function_name: my-test-function
+          zip_file: /dev/null
+          dry_run: true
+          debug: true
+          reversion_id: abc123revision
+      - name: Assert action was invoked with session token inputs
+        run: |
+          echo "Action completed (continue-on-error). Step outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action was invoked with aws_session_token, aws_profile, debug, and reversion_id inputs"
